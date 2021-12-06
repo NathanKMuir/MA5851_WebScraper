@@ -19,7 +19,6 @@ import seaborn as sns
 import nltk
 import re
 from statistics import mean
-from itertools import chain
 
 # Set working directory
 wd = "C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3"
@@ -246,11 +245,31 @@ del tweets['temp']
 # Check dimensions following filtering
 print(tweets.shape) # 19923, 18
 
+# Create partial matches and temp column
+partials = ["improvised", "explosive", "device", "suicide",
+                "bomber", "car", "bomb", "loitering", "munition",
+                "unmanned", "aerial", "system", "vehicle", "attack", "drone"]
+hold = []
+for word in tweets['search_term']:
+    h = " ".join(map(str,word))
+    hold.append(h)
+tweets['temp'] = hold
+
+# Remove temp where only matches partials
+for i in range(0, len(tweets)):    
+    if tweets['temp'][i] in partials:
+        tweets['temp'][i] = ""
+
+# Remove rows with only partial matches
+tweets = tweets.loc[(tweets['temp'] != "")]
+del tweets['temp']
+print(tweets.shape) # 16072, 18
+
 # Reset index
 tweets = tweets.reset_index(drop=True)
 
 # Get number of unique users & mean posts
-print(tweets['user_name'].nunique()) #15099
+print(tweets['user_name'].nunique()) #12185
 all_users = nltk.FreqDist(tweets['user_name'])
 all_users = pd.DataFrame({'Username':list(all_users.keys()),
                              'Posts':list(all_users.values())})
@@ -281,7 +300,7 @@ ax = sns.barplot(data=g, x= "count", y = "hashtags")
 ax.set(ylabel = 'count') 
 plt.show()
 
-# Plot representation of location?
+# Plot representation of location
 locations = tweets['location']
 for i in (range(0, len(locations))):
     locations[i] = re.sub(r'[^\w\s]', '', locations[i])
@@ -302,11 +321,10 @@ plt.show() # We can see pronouns, age, text unrelated to location
 # Export final scrape to CSV
 tweets.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\tweets.csv")
     
-#%% DOCUMENT THREE
-#
-#
-#
-#
+#%% DOCUMENT THREE - SENTIMENT ANALYSIS
+
+# Reduce dataframe to necessary features
+df = tweets[['content','user_name', 'user_desc', 'search_term' ]]
 
 
 

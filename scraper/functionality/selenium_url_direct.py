@@ -5,6 +5,7 @@ Created on Tue Dec  7 19:39:26 2021
 @author: natha
 """
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
 
@@ -12,7 +13,10 @@ import time
 url = "https://twitter.com/ASBMilitary/status/1466331358339469319"
 
 # Set up scraper
-driver = webdriver.Chrome()
+chrome_options = Options()
+chrome_options.add_argument('--enable-javascript')
+# or? chrome_options.add_argument('javascript.enabled', True)
+driver = webdriver.Chrome(options=chrome_options)
 driver.get(url)
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 

@@ -13,7 +13,9 @@ import random
 # This script will find tweets relating to a search query 
 # It is dynamic - it will dynamically scroll.
 
-url = "https://twitter.com/search?q=ied"
+# https://twitter.com/search?q=ied%20until%3A2021-12-01%20since%3A2021-09-01%20-filter%3Areplies&src=typed_query&f=live
+#url = "https://twitter.com/search?q=ied"
+url = "https://twitter.com/search?q=ied%20until%3A2021-11-30%20since%3A2021-09-01%20-filter%3Areplies&src=typed_query&f=live"
 
 # Define user agent list
 user_agent_list  = ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
@@ -68,8 +70,6 @@ while True:
     
     # Break the loop when the height we need to scroll to is larger than the total scroll height
     if (screen_height) * i > scroll_height:
-        break
-    if (scroll_count) > 500000:
         break
     
     

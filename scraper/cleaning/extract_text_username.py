@@ -7,6 +7,7 @@ Created on Thu Dec  9 14:03:16 2021
 
 import pandas as pd
 import re
+import numpy as np
 
 # Import scraped tweets
 content = pd.read_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\content_df.csv")
@@ -22,15 +23,17 @@ for i in content:
 
 # Extract text belonging to user
 content_list = []
-for k in range(0, len(content)):
-    users = usernames[k]
-    screen = content[k]
-    for i in range(0, len(users)):
-        if i > len(users):
-            content_add = screen[screen.find(users[i])+(len(users[i])) : screen.find(users[i+1])]
+# Now add this onto full loop
+for i in range(0, len(content)):
+    screen = content[i]
+    users = usernames[i]
+    for user in users:
+        if users.index(user) < (len(users)-1):
+            content_add = screen[screen.find(user)+(len(user)) : screen.find(users[users.index(user)+1])-1]
             content_list.append(content_add)
+            screen = screen.replace("@" + user, "", 1)   
         else:
-            content_add = screen[screen.find(users[i])+(len(users[i])) : screen.find("New to Twitter?")]
+            content_add = screen[screen.find(user)+(len(user)) : screen.find("New to Twitter?")]
             content_list.append(content_add)
 
 # Create list of users as they appear in the text
@@ -38,11 +41,39 @@ user_list = []
 for i in usernames:
     for user in i:
         user_list.append(user)
+        
+# Join users and their tweets together
+scraped_tweets = pd.DataFrame({"username" : user_list, "text" : content_list})
 
+# Remove date (inconsistent)
+for i in range(0, len(scraped_tweets)-1):
+    try:
+        if "·" in scraped_tweets['text'][i]:
+            hold = scraped_tweets['text'][i]
+            hold = hold.split()
+            del hold[0]
+            hold[0] = re.sub(r'[0-9]', '', hold[0])
+            hold = " ".join(hold)
+            scraped_tweets['text'][i] = hold
+    except:
+        pass
+    
+# Filter out empty tweets
+scraped_tweets.shape # 121203, 2
+scraped_tweets['text'] = scraped_tweets['text'].replace(r'^\s*$', np.NaN, regex=True)
+scraped_tweets.dropna(subset = ['text'], inplace = True) 
+scraped_tweets.shape # 101391, 2
+scraped_tweets = scraped_tweets.reset_index(drop=True)
 
-#%% testing
+# Filter out parsing errors where characters are over tweet limit
+scraped_tweets['char_count'] = 1
+for i in range(0, len(scraped_tweets)):
+    scraped_tweets['char_count'][i] = len(scraped_tweets['text'][i])
+scraped_tweets = scraped_tweets.loc[(scraped_tweets['char_count'] >= 0)
+                                          & (scraped_tweets['char_count'] < 240)]
+del scraped_tweets['char_count']
+scraped_tweets.shape # 69468, 2
 
-
-         
-         
-
+# Export as CSV
+scraped_tweets.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\scraped_tweets.csv")
+    

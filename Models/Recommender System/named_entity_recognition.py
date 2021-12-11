@@ -29,7 +29,11 @@ for i in range(0, len(intel)):
     GPE_temp = []
     PERSON_temp = []
     ORG_temp = []
-    review = NER(intel['text'][i])
+    hold = intel['text'][i]
+    hold = hold.lower() # lowercase
+    hold = re.sub(r'[^\w\s]', '', hold) # remove punctuation
+    hold = re.sub(r'[0-9]', '', hold) # remove numbers
+    review = NER(hold)
     for word in review.ents:
         if word.label_ == "PERSON":
             PERSON_temp.append(word.text)
@@ -40,7 +44,7 @@ for i in range(0, len(intel)):
     GPE_list.append(GPE_temp)
     PERSON_list.append(PERSON_temp)
     ORG_list.append(ORG_temp)
-    
+
 # Add named entities onto intel dataframe
 intel['location'] = GPE_list
 intel['person'] = PERSON_list

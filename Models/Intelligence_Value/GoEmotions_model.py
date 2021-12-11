@@ -288,6 +288,50 @@ time_stop = time.time()
 training_time = time_stop-time_start
 print(f"Time to train: {training_time}") # 7 seconds
 
-# Get name of predicted emotion for each row
+#%% Interpret results
+
+# Convert result to dataframe
 emotions = pd.DataFrame(y_pred_tweets)
 emotions.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\emotions.csv")
+
+# Get names of emotions
+emotion_names = list(GoEmotions.columns)
+emotion_names = emotion_names[1:]
+emotions.columns = emotion_names
+
+# Create new column with emotion returned in row
+emotions['column'] = emotions.apply(lambda x: emotions.columns[x.argmax()], axis = 1)
+
+# Import uncleaned tweets dataframe and add column
+tweets = pd.read_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\tweets.csv")
+tweets['date'] = pd.to_datetime(tweets['date'])
+del tweets['Unnamed: 0']
+tweets['emotion'] = emotions['column']
+
+# Visualise tweet emotions
+all_emo = nltk.FreqDist(tweets['emotion'])
+all_emo = pd.DataFrame({'Emotion':list(all_emo.keys()),
+                             'Count':list(all_emo.values())})
+g = all_emo.nlargest(columns="Count", n = 28) 
+plt.figure(figsize=(12,15)) 
+ax = sns.barplot(data=g, x= "Count", y = "Emotion") 
+ax.set(ylabel = 'Count') 
+plt.show()
+
+# Print examples
+print(tweets['text'][18]) # admiration
+print(tweets['text'][547]) # amusement
+print(tweets['text'][1958]) # desire (remove)
+print(tweets['text'][2312]) # desire (remove)
+print(tweets['text'][1929]) # embarrassment (remove)
+print(tweets['text'][2092]) # love
+print(tweets['text'][1076]) # nervousness (remove)
+print(tweets['text'][229]) # relief (remove)
+
+# Filter out emotions set as 'to remove'
+print(tweets.shape)
+intel = tweets.loc[(tweets['emotion'] != 'desire')]
+intel = intel.loc[(intel['emotion'] != 'embarrassment')]
+intel = intel.loc[(intel['emotion'] != 'nervousness')]
+intel = intel.loc[(intel['emotion'] != 'relief')]        
+intel.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\intel.csv")

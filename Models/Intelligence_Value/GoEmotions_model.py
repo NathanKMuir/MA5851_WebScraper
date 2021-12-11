@@ -14,6 +14,12 @@ from sklearn.multiclass import OneVsRestClassifier # for multiclass modelling
 from sklearn.metrics import accuracy_score, f1_score, precision_score
 import time
 import matplotlib.pyplot as plt
+import re
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+import seaborn as sns
 
 # Import data and reset to previous state
 GoEmotions = pd.read_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\GoEmotions.csv")
@@ -184,9 +190,104 @@ plt.title("Accuracy Score Across All Models")
 plt.show() # Model 2 (y_pred_new) is the highest performing
 
 #%% APPLY TO TWEETS 
+
 # Load in tweets data
 tweets = pd.read_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\tweets.csv")
 tweets['date'] = pd.to_datetime(tweets['date'])
 del tweets['Unnamed: 0']
 
-# Pre-process ()
+#%% Pre-process 
+
+# Make all text lowercase
+tweets['text'] = [word.lower() for word in tweets['text']]
+
+# Remove all punctuation from text
+for i in (range(0, len(tweets))):
+    tweets['text'][i] = re.sub(r'[^\w\s]', '', tweets['text'][i])
+print('Punctuation removed.')
+    
+# Remove numbers
+for i in (range(0, len(GoEmotions))):
+    GoEmotions['text'][i] = re.sub(r'[0-9]', '', GoEmotions['text'][i])
+print('Numbers removed.')
+
+# Load and configure stopwords
+all_stopwords = stopwords.words('english')
+additional_stopwords = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+for letter in additional_stopwords:
+    all_stopwords.append(letter)
+
+# Remove stopwords
+passwords = []
+for sentence in range(0, len(tweets['text'])):
+    review = tweets['text'][sentence].split()
+    holding = []
+    for word in review:
+        if word not in all_stopwords:
+            holding.append(word)
+    passwords.append(' '.join(holding))
+
+# Perform stemming on passwords
+corpus = []
+for sentence in range(0, len(passwords)):
+    review = passwords[sentence].split()
+    ps = PorterStemmer()
+    holding = []
+    for word in review:
+        word = ps.stem(word)
+        holding.append(word)
+    corpus.append(' '.join(holding))
+
+# What is the frequency distribution of each word? 
+word_list = []
+for sentence in range(0, len(corpus)):
+    review = corpus[sentence].split()
+    for word in review:
+        word_list.append(word) # 48052 total words
+
+# Generate frequency dictionary
+freqDict =  dict()
+visited = set()
+for element in word_list:
+    if element in visited:
+        freqDict[element] = freqDict[element] + 1
+    else:
+        freqDict[element] = 1
+        visited.add(element)
+print('The number of unique words in the corpus is: ' + str(len(freqDict))) # 8723
+word_freq = pd.Series(freqDict).sort_values(ascending=False)
+
+# Visualise top 30 words
+word_list1 = nltk.FreqDist(word_list)
+word_list1 = pd.DataFrame({'Word':list(word_list1.keys()),
+                             'Count':list(word_list1.values())})
+g = word_list1.nlargest(columns="Count", n = 30) 
+plt.figure(figsize=(12,15)) 
+ax = sns.barplot(data=g, x= "Count", y = "Word") 
+ax.set(ylabel = 'Count') 
+plt.show()
+
+# Push corpus back into tweets dataframe & export to CSV
+tweets['text'] = corpus
+tweets.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\tweets_corpus.csv")
+
+#%% Vectorize tweet data
+X_tweets = tfidf_vectorizer.fit_transform(corpus).toarray()
+
+#%% Apply model
+
+# Make predictions on available data
+time_start = time.time()
+y_pred_tweets_probs = clf.predict_proba(X_tweets)
+
+# Lower threshold to increase volume of results
+t = 0.2
+y_pred_tweets = (y_pred_tweets_probs >= t).astype(int)
+time_stop = time.time()
+training_time = time_stop-time_start
+print(f"Time to train: {training_time}") # 7 seconds
+
+# Get name of predicted emotion for each row
+emotions = pd.DataFrame(y_pred_tweets)
+emotions.to_csv("C:\\Users\\natha\\Documents\\Master of Data Science\\MA5851 Natural Language Processing\\A3\\emotions.csv")

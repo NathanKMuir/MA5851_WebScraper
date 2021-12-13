@@ -1,6 +1,7 @@
 # Operational Order
 
-As the repository contains many files of different functions, please find below the operational order taken by the project author to step through the process. Alternative scripts are available for different purposes however, and exploration is encouraged.
+As the repository contains many files of different functions, please find below the operational order taken by the project author to step through the process. 
+Alternative scripts are available for different purposes however, and exploration is encouraged.
 
 1. snscrape_term.py
 2. selenium_dynamic_term.py
